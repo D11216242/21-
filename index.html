@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>十點半 10.5</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #ffd700;
+        }
+
+        .rules-info {
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 0.85em;
+            color: #bbb;
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .message {
+            flex: 0 0 100%;
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 5px;
+            font-size: 1.1em;
+            font-weight: bold;
+            min-height: 40px;
+        }
+
+        /* Game Area */
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .dealer-area, .player-area {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .area-title {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .point-display {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        /* Cards */
+        .cards-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            min-height: 120px;
+            align-items: center;
+        }
+
+        .card {
+            width: 80px;
+            height: 112px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .card.back {
+            background: linear-gradient(135deg, #0066cc 0%, #003366 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card.back::before {
+            content: '';
+            width: 60px;
+            height: 80px;
+            border: 3px solid white;
+            border-radius: 5px;
+        }
+
+        .card-rank {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .card-suit {
+            font-size: 1.8em;
+            text-align: center;
+        }
+
+        .card.red {
+            color: #d32f2f;
+        }
+
+        .card.black {
+            color: #212121;
+        }
+
+        /* Player Hands */
+        .player-hands {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .hand {
+            border: 2px solid transparent;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .hand.active {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .hand-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        .hand-bet {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .hand-status {
+            font-style: italic;
+            color: #aaa;
+        }
+
+        /* Controls */
+        .controls {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .control-section {
+            margin-bottom: 20px;
+        }
+
+        .control-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            font-size: 0.9em;
+            color: #bbb;
+            margin-bottom: 10px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #4caf50;
+            color: white;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        button:disabled {
+            background: #555;
+            color: #888;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        button.primary {
+            background: #2196f3;
+        }
+
+        button.warning {
+            background: #ff9800;
+        }
+
+        button.danger {
+            background: #f44336;
+        }
+
+        .bet-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .bet-controls button {
+            width: 50px;
+            height: 50px;
+            font-size: 1.5em;
+            padding: 0;
+        }
+
+        .bet-display {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #ffd700;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .status-bar {
+                font-size: 0.85em;
+            }
+
+            .card {
+                width: 60px;
+                height: 84px;
+                padding: 5px;
+            }
+
+            .card-rank {
+                font-size: 1.2em;
+            }
+
+            .card-suit {
+                font-size: 1.4em;
+            }
+
+            button {
+                padding: 10px 16px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>♠️ 十點半 10.5 ♥️</h1>
+            <div class="rules-info">1 Deck | Goal: 10.5 | Dealer Stands on 8.5+</div>
+        </header>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-label">籌碼 Balance</div>
+                <div class="status-value" id="balance">1000</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">下注 Bet</div>
+                <div class="status-value" id="current-bet">10</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">局數 Round</div>
+                <div class="status-value" id="round-no">0</div>
+            </div>
+            <div class="message" id="message">歡迎！請下注開始遊戲</div>
+        </div>
+
+        <div class="game-area">
+            <div class="dealer-area">
+                <div class="area-title">
+                    <span>莊家 Dealer</span>
+                    <span class="point-display" id="dealer-points">-</span>
+                </div>
+                <div class="cards-container" id="dealer-cards"></div>
+            </div>
+
+            <div class="player-area">
+                <div class="area-title">
+                    <span>玩家 Player</span>
+                </div>
+                <div class="player-hands" id="player-hands"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-section">
+                <div class="control-label">下注調整</div>
+                <div class="bet-controls">
+                    <button id="bet-minus" onclick="adjustBet(-10)">-</button>
+                    <div class="bet-display" id="bet-display">10</div>
+                    <button id="bet-plus" onclick="adjustBet(10)">+</button>
+                    <button class="primary" id="deal-btn" onclick="dealCards()">發牌 Deal</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <div class="control-label">遊戲操作</div>
+                <div class="button-group">
+                    <button id="hit-btn" onclick="hit()" disabled>要牌 Hit</button>
+                    <button id="stand-btn" onclick="stand()" disabled>停牌 Stand</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <button class="primary" id="new-round-btn" onclick="newRound()" disabled>新局 New Round</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game Constants
+        const CONFIG = {
+            initialBalance: 1000,
+            minBet: 10,
+            maxBet: 500,
+            decks: 1, // Single deck
+            dealerHitThreshold: 8.5, // Dealer hits if < 8.5
+            targetScore: 10.5 // Target score
+        };
+
+        // Game State
+        let gameState = {
+            balance: CONFIG.initialBalance,
+            baseBet: CONFIG.minBet,
+            roundNo: 0,
+            shoe: [],
+            dealerHand: { cards: [], bet: 0 },
+            playerHands: [],
+            activeHandIndex: 0,
+            phase: 'BETTING'
+        };
+
+        // Card suits and ranks
+        const SUITS = ['♠', '♥', '♦', '♣'];
+        const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+        // Initialize game
+        function initGame() {
+            createShoe();
+            updateUI();
+        }
+
+        // Create and shuffle shoe
+        function createShoe() {
+            gameState.shoe = [];
+            for (let d = 0; d < CONFIG.decks; d++) {
+                for (let suit of SUITS) {
+                    for (let rank of RANKS) {
+                        gameState.shoe.push({ rank, suit });
+                    }
+                }
+            }
+            shuffleShoe();
+        }
+
+        function shuffleShoe() {
+            for (let i = gameState.shoe.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [gameState.shoe[i], gameState.shoe[j]] = [gameState.shoe[j], gameState.shoe[i]];
+            }
+        }
+
+        function drawCard() {
+            if (gameState.shoe.length < 20) {
+                createShoe();
+                showMessage('牌不足，重新洗牌...');
+            }
+            return gameState.shoe.pop();
+        }
+
+        // Calculate hand value for 10.5 game
+        function calculateHandValue(cards) {
+            let value = 0;
+
+            for (let card of cards) {
+                if (card.rank === 'A') {
+                    value += 1; // A = 1
+                } else if (['J', 'Q', 'K'].includes(card.rank)) {
+                    value += 0.5; // J/Q/K = 0.5
+                } else {
+                    value += parseInt(card.rank); // 2-10 = face value
+                }
+            }
+
+            return value;
+        }
+
+        // Betting
+        function adjustBet(amount) {
+            const newBet = gameState.baseBet + amount;
+            if (newBet >= CONFIG.minBet && newBet <= CONFIG.maxBet && newBet <= gameState.balance) {
+                gameState.baseBet = newBet;
+                updateUI();
+            } else if (newBet < CONFIG.minBet) {
+                showMessage(`最小下注為 ${CONFIG.minBet}`);
+            } else if (newBet > CONFIG.maxBet) {
+                showMessage(`最大下注為 ${CONFIG.maxBet}`);
+            } else {
+                showMessage('籌碼不足！');
+            }
+        }
+
+        // Deal cards
+        function dealCards() {
+            if (gameState.baseBet > gameState.balance) {
+                showMessage('籌碼不足！');
+                return;
+            }
+
+            // Deduct bet and start new round
+            gameState.balance -= gameState.baseBet;
+            gameState.roundNo++;
+            gameState.phase = 'DEALING';
+
+            // Reset hands
+            gameState.dealerHand = { cards: [], bet: 0 };
+            gameState.playerHands = [{
+                cards: [],
+                bet: gameState.baseBet,
+                status: 'active'
+            }];
+            gameState.activeHandIndex = 0;
+
+            showMessage('發牌中...');
+            updateUI();
+
+            // Deal initial cards one by one with animation  
+            setTimeout(() => {
+                gameState.playerHands[0].cards.push(drawCard());
+                updateUI();
+                
+                setTimeout(() => {
+                    gameState.dealerHand.cards.push(drawCard());
+                    updateUI();
+                    
+                    setTimeout(() => {
+                        gameState.playerHands[0].cards.push(drawCard());
+                        gameState.phase = 'PLAYER_TURN';
+                        updateUI();
+
+                        // Check if player busted on deal
+                        const playerValue = calculateHandValue(gameState.playerHands[0].cards);
+                        if (playerValue > CONFIG.targetScore) {
+                            gameState.playerHands[0].status = 'bust';
+                            showMessage('爆牌！你輸了');
+                            dealerTurn();
+                        } else {
+                            showMessage('輪到你了！');
+                        }
+                    }, 400);
+                }, 400);
+            }, 400);
+        }
+
+        // Player actions
+        function hit() {
+            const hand = gameState.playerHands[gameState.activeHandIndex];
+            if (hand.status !== 'active') return;
+
+            hand.cards.push(drawCard());
+            const value = calculateHandValue(hand.cards);
+
+            if (value > CONFIG.targetScore) {
+                hand.status = 'bust';
+                showMessage(`爆牌（${value}）！你輸了`);
+                dealerTurn();
+            } else if (value === CONFIG.targetScore) {
+                showMessage(`達到 ${CONFIG.targetScore}！`);
+                hand.status = 'stand';
+                dealerTurn();
+            } else {
+                showMessage(`目前點數：${value}`);
+            }
+
+            updateUI();
+        }
+
+        function stand() {
+            const hand = gameState.playerHands[gameState.activeHandIndex];
+            if (hand.status !== 'active') return;
+
+            hand.status = 'stand';
+            const value = calculateHandValue(hand.cards);
+            showMessage(`停牌（${value}）`);
+            dealerTurn();
+            updateUI();
+        }
+
+        function dealerTurn() {
+            gameState.phase = 'DEALER_TURN';
+            showMessage('莊家回合...');
+            updateUI();
+
+            setTimeout(() => {
+                // Dealer draws until >= 8.5
+                let dealerValue = calculateHandValue(gameState.dealerHand.cards);
+                while (dealerValue < CONFIG.dealerHitThreshold) {
+                    gameState.dealerHand.cards.push(drawCard());
+                    updateUI();
+                    dealerValue = calculateHandValue(gameState.dealerHand.cards);
+                }
+
+                if (dealerValue > CONFIG.targetScore) {
+                    showMessage(`莊家爆牌（${dealerValue}）！`);
+                } else {
+                    showMessage(`莊家停在 ${dealerValue}`);
+                }
+
+                setTimeout(() => {
+                    settle();
+                }, 500);
+            }, 1000);
+        }
+
+        function settle() {
+            gameState.phase = 'SETTLE';
+            const dealerValue = calculateHandValue(gameState.dealerHand.cards);
+            const dealerBust = dealerValue > CONFIG.targetScore;
+
+            const hand = gameState.playerHands[0];
+            const playerValue = calculateHandValue(hand.cards);
+            const playerBust = playerValue > CONFIG.targetScore;
+
+            let result = '';
+
+            if (playerBust) {
+                result = `爆牌（${playerValue}）- 你輸了 ${hand.bet}`;
+                hand.status = 'lose';
+            } else if (dealerBust) {
+                const winAmount = hand.bet * 2;
+                gameState.balance += winAmount;
+                result = `莊家爆牌（${dealerValue}）- 你贏了 ${hand.bet}`;
+                hand.status = 'win';
+            } else if (playerValue > dealerValue) {
+                const winAmount = hand.bet * 2;
+                gameState.balance += winAmount;
+                result = `${playerValue} vs ${dealerValue} - 你贏了 ${hand.bet}`;
+                hand.status = 'win';
+            } else {
+                // Tie or dealer wins (tie goes to dealer)
+                result = `${playerValue} vs ${dealerValue} - 莊家贏`;
+                hand.status = 'lose';
+            }
+
+            showMessage(result);
+            updateUI();
+        }
+
+        function newRound() {
+            gameState.phase = 'BETTING';
+            gameState.dealerHand = { cards: [], bet: 0 };
+            gameState.playerHands = [];
+            gameState.activeHandIndex = 0;
+
+            if (gameState.balance < CONFIG.minBet) {
+                showMessage('籌碼不足！遊戲結束。重新整理頁面開始新遊戲。');
+            } else {
+                showMessage('請下注開始新局');
+            }
+
+            updateUI();
+        }
+
+        // UI Updates
+        function updateUI() {
+            // Update status bar
+            document.getElementById('balance').textContent = gameState.balance;
+            document.getElementById('current-bet').textContent = gameState.baseBet;
+            document.getElementById('round-no').textContent = gameState.roundNo;
+            document.getElementById('bet-display').textContent = gameState.baseBet;
+
+            // Update dealer cards
+            const dealerCardsEl = document.getElementById('dealer-cards');
+            dealerCardsEl.innerHTML = '';
+            gameState.dealerHand.cards.forEach((card, index) => {
+                const cardEl = createCardElement(card, gameState.phase === 'PLAYER_TURN' && index === 1);
+                dealerCardsEl.appendChild(cardEl);
+            });
+
+            // Update dealer points
+            const dealerPointsEl = document.getElementById('dealer-points');
+            if (gameState.phase === 'PLAYER_TURN' && gameState.dealerHand.cards.length > 0) {
+                const visibleValue = calculateHandValue([gameState.dealerHand.cards[0]]);
+                dealerPointsEl.textContent = `${visibleValue} + ?`;
+            } else if (gameState.dealerHand.cards.length > 0) {
+                const value = calculateHandValue(gameState.dealerHand.cards);
+                dealerPointsEl.textContent = value;
+            } else {
+                dealerPointsEl.textContent = '-';
+            }
+
+            // Update player hands
+            const playerHandsEl = document.getElementById('player-hands');
+            playerHandsEl.innerHTML = '';
+            gameState.playerHands.forEach((hand, index) => {
+                const handEl = document.createElement('div');
+                handEl.className = 'hand' + (index === gameState.activeHandIndex && hand.status === 'active' ? ' active' : '');
+
+                const handInfo = document.createElement('div');
+                handInfo.className = 'hand-info';
+
+                const handTitle = document.createElement('span');
+                handTitle.textContent = `手牌 ${index + 1}`;
+                
+                const handBet = document.createElement('span');
+                handBet.className = 'hand-bet';
+                handBet.textContent = `下注: ${hand.bet}`;
+
+                const handValue = document.createElement('span');
+                handValue.className = 'point-display';
+                const value = calculateHandValue(hand.cards);
+                handValue.textContent = `點數: ${value}`;
+
+                const handStatus = document.createElement('span');
+                handStatus.className = 'hand-status';
+                if (hand.status === 'bust') handStatus.textContent = '爆牌';
+                else if (hand.status === 'stand') handStatus.textContent = '停牌';
+                else if (hand.status === 'win') handStatus.textContent = '勝';
+                else if (hand.status === 'lose') handStatus.textContent = '輸';
+
+                handInfo.appendChild(handTitle);
+                handInfo.appendChild(handBet);
+                handInfo.appendChild(handValue);
+                if (handStatus.textContent) handInfo.appendChild(handStatus);
+
+                const cardsContainer = document.createElement('div');
+                cardsContainer.className = 'cards-container';
+                hand.cards.forEach(card => {
+                    cardsContainer.appendChild(createCardElement(card, false));
+                });
+
+                handEl.appendChild(handInfo);
+                handEl.appendChild(cardsContainer);
+                playerHandsEl.appendChild(handEl);
+            });
+
+            // Update buttons
+            updateButtons();
+        }
+
+        function createCardElement(card, isHidden) {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'card';
+
+            if (isHidden) {
+                cardEl.classList.add('back');
+            } else {
+                const isRed = card.suit === '♥' || card.suit === '♦';
+                cardEl.classList.add(isRed ? 'red' : 'black');
+
+                const rankEl = document.createElement('div');
+                rankEl.className = 'card-rank';
+                rankEl.textContent = card.rank;
+
+                const suitEl = document.createElement('div');
+                suitEl.className = 'card-suit';
+                suitEl.textContent = card.suit;
+
+                cardEl.appendChild(rankEl);
+                cardEl.appendChild(suitEl);
+            }
+
+            return cardEl;
+        }
+
+        function updateButtons() {
+            const phase = gameState.phase;
+
+            // Betting controls
+            document.getElementById('bet-minus').disabled = phase !== 'BETTING';
+            document.getElementById('bet-plus').disabled = phase !== 'BETTING';
+            document.getElementById('deal-btn').disabled = phase !== 'BETTING' || gameState.balance < gameState.baseBet;
+
+            // Action buttons
+            const activeHand = gameState.playerHands[gameState.activeHandIndex];
+            const isPlayerTurn = phase === 'PLAYER_TURN' && activeHand && activeHand.status === 'active';
+
+            document.getElementById('hit-btn').disabled = !isPlayerTurn;
+            document.getElementById('stand-btn').disabled = !isPlayerTurn;
+
+            // New round button
+            document.getElementById('new-round-btn').disabled = phase !== 'SETTLE';
+        }
+
+        function showMessage(msg) {
+            document.getElementById('message').textContent = msg;
+        }
+
+        // Initialize on load
+        window.onload = initGame;
+    </script>
+</body>
+</html>
