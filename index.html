@@ -374,8 +374,6 @@
                     <button id="stand-btn" onclick="stand()" disabled>停牌 Stand</button>
                     <button id="double-btn" onclick="doubleDown()" disabled>加倍 Double</button>
                     <button id="split-btn" onclick="split()" disabled>分牌 Split</button>
-                    <button class="warning" id="insurance-btn" onclick="insurance()" disabled>保險 Insurance</button>
-                    <button class="danger" id="surrender-btn" onclick="surrender()" disabled>投降 Surrender</button>
                 </div>
             </div>
 
@@ -534,7 +532,7 @@
             // Deduct bet and start new round
             gameState.balance -= gameState.baseBet;
             gameState.roundNo++;
-            gameState.phase = 'PLAYER_TURN';
+            gameState.phase = 'DEALING';
             gameState.splitCount = 0;
             gameState.insuranceTaken = false;
             gameState.insuranceBet = 0;
@@ -551,45 +549,55 @@
             }];
             gameState.activeHandIndex = 0;
 
-            // Deal initial cards
-            gameState.playerHands[0].cards.push(drawCard());
-            gameState.dealerHand.cards.push(drawCard());
-            gameState.playerHands[0].cards.push(drawCard());
-            gameState.dealerHand.cards.push(drawCard());
-
+            showMessage('發牌中...');
             updateUI();
 
-            // Check for blackjacks
-            const playerBJ = isBlackjack(gameState.playerHands[0].cards);
-            const dealerBJ = isBlackjack(gameState.dealerHand.cards);
-
-            if (playerBJ || dealerBJ) {
-                gameState.phase = 'SETTLE';
-                if (playerBJ && dealerBJ) {
-                    showMessage('雙方都是 Blackjack！平手 Push');
-                    gameState.playerHands[0].status = 'push';
-                    gameState.balance += gameState.baseBet;
-                } else if (playerBJ) {
-                    showMessage('🎉 Blackjack！你贏了 3:2！');
-                    const winAmount = gameState.baseBet * (1 + CONFIG.blackjackPayout);
-                    gameState.balance += winAmount;
-                    gameState.playerHands[0].status = 'blackjack';
-                } else {
-                    showMessage('莊家 Blackjack！你輸了');
-                    gameState.playerHands[0].status = 'lose';
-                }
+            // Deal initial cards one by one with animation
+            setTimeout(() => {
+                gameState.playerHands[0].cards.push(drawCard());
                 updateUI();
-                return;
-            }
+                
+                setTimeout(() => {
+                    gameState.dealerHand.cards.push(drawCard());
+                    updateUI();
+                    
+                    setTimeout(() => {
+                        gameState.playerHands[0].cards.push(drawCard());
+                        updateUI();
+                        
+                        setTimeout(() => {
+                            gameState.dealerHand.cards.push(drawCard());
+                            gameState.phase = 'PLAYER_TURN';
+                            updateUI();
 
-            // Check for insurance
-            if (CONFIG.insuranceEnabled && gameState.dealerHand.cards[0].rank === 'A') {
-                showMessage('莊家顯示 A，是否要保險？');
-            } else {
-                showMessage('輪到你了！');
-            }
+                            // Check for blackjacks
+                            const playerBJ = isBlackjack(gameState.playerHands[0].cards);
+                            const dealerBJ = isBlackjack(gameState.dealerHand.cards);
 
-            updateUI();
+                            if (playerBJ || dealerBJ) {
+                                gameState.phase = 'SETTLE';
+                                if (playerBJ && dealerBJ) {
+                                    showMessage('雙方都是 Blackjack！平手 Push');
+                                    gameState.playerHands[0].status = 'push';
+                                    gameState.balance += gameState.baseBet;
+                                } else if (playerBJ) {
+                                    showMessage('🎉 Blackjack！你贏了 3:2！');
+                                    const winAmount = gameState.baseBet * (1 + CONFIG.blackjackPayout);
+                                    gameState.balance += winAmount;
+                                    gameState.playerHands[0].status = 'blackjack';
+                                } else {
+                                    showMessage('莊家 Blackjack！你輸了');
+                                    gameState.playerHands[0].status = 'lose';
+                                }
+                                updateUI();
+                                return;
+                            }
+
+                            showMessage('輪到你了！');
+                        }, 400);
+                    }, 400);
+                }, 400);
+            }, 400);
         }
 
         // Player actions
@@ -738,18 +746,6 @@
             showMessage('莊家回合...');
             updateUI();
 
-            // Check insurance
-            if (gameState.insuranceTaken) {
-                const dealerBJ = isBlackjack(gameState.dealerHand.cards);
-                if (dealerBJ) {
-                    const insuranceWin = gameState.insuranceBet * 3; // 2:1 payout plus original bet
-                    gameState.balance += insuranceWin;
-                    showMessage(`莊家 Blackjack！保險賠付 ${insuranceWin}`);
-                } else {
-                    showMessage('莊家非 Blackjack，保險輸掉');
-                }
-            }
-
             setTimeout(() => {
                 // Dealer draws (S17 rule: Stand on soft 17)
                 let dealerValue = calculateHandValue(gameState.dealerHand.cards);
@@ -781,11 +777,7 @@
 
             for (let i = 0; i < gameState.playerHands.length; i++) {
                 const hand = gameState.playerHands[i];
-                if (hand.surrendered) {
-                    results.push(`手牌 ${i + 1}: 投降`);
-                    continue;
-                }
-
+                
                 const playerValue = calculateHandValue(hand.cards);
                 const playerBust = playerValue > 21;
 
@@ -889,7 +881,6 @@
                 handStatus.className = 'hand-status';
                 if (hand.status === 'bust') handStatus.textContent = '爆牌';
                 else if (hand.status === 'stand') handStatus.textContent = '停牌';
-                else if (hand.status === 'surrendered') handStatus.textContent = '投降';
                 else if (hand.status === 'blackjack') handStatus.textContent = 'Blackjack';
                 else if (hand.status === 'win') handStatus.textContent = '勝';
                 else if (hand.status === 'lose') handStatus.textContent = '輸';
@@ -963,16 +954,6 @@
                 !canSplit(activeHand) || 
                 gameState.splitCount >= CONFIG.maxSplits ||
                 gameState.balance < activeHand.bet;
-
-            document.getElementById('insurance-btn').disabled = !isPlayerTurn ||
-                gameState.insuranceTaken ||
-                gameState.dealerHand.cards.length === 0 ||
-                gameState.dealerHand.cards[0].rank !== 'A' ||
-                gameState.balance < Math.floor(gameState.baseBet / 2);
-
-            document.getElementById('surrender-btn').disabled = !isPlayerTurn ||
-                activeHand.cards.length !== 2 ||
-                activeHand.fromSplit;
 
             // New round button
             document.getElementById('new-round-btn').disabled = phase !== 'SETTLE';
