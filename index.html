@@ -492,7 +492,7 @@
                 }
             }
 
-            return hasAce && value <= 21 && cards.some(c => c.rank === 'A');
+            return hasAce && value <= 21;
         }
 
         function isBlackjack(cards) {
@@ -721,18 +721,16 @@
         }
 
         function nextHand() {
-            gameState.activeHandIndex++;
-            if (gameState.activeHandIndex >= gameState.playerHands.length) {
-                // All hands done, dealer's turn
-                dealerTurn();
-            } else {
+            while (gameState.activeHandIndex < gameState.playerHands.length - 1) {
+                gameState.activeHandIndex++;
                 const nextHand = gameState.playerHands[gameState.activeHandIndex];
                 if (nextHand.status === 'active') {
                     showMessage(`輪到手牌 ${gameState.activeHandIndex + 1}`);
-                } else {
-                    nextHand();
+                    return;
                 }
             }
+            // All hands done, dealer's turn
+            dealerTurn();
         }
 
         function dealerTurn() {
@@ -753,13 +751,14 @@
             }
 
             setTimeout(() => {
-                // Dealer draws
-                while (calculateHandValue(gameState.dealerHand.cards) < 17) {
+                // Dealer draws (S17 rule: Stand on soft 17)
+                let dealerValue = calculateHandValue(gameState.dealerHand.cards);
+                while (dealerValue < 17 || (dealerValue === 17 && CONFIG.dealerSoft17 === 'HIT' && isSoft(gameState.dealerHand.cards))) {
                     gameState.dealerHand.cards.push(drawCard());
                     updateUI();
+                    dealerValue = calculateHandValue(gameState.dealerHand.cards);
                 }
 
-                const dealerValue = calculateHandValue(gameState.dealerHand.cards);
                 if (dealerValue > 21) {
                     showMessage('莊家爆牌！');
                 } else {
@@ -967,6 +966,7 @@
 
             document.getElementById('insurance-btn').disabled = !isPlayerTurn ||
                 gameState.insuranceTaken ||
+                gameState.dealerHand.cards.length === 0 ||
                 gameState.dealerHand.cards[0].rank !== 'A' ||
                 gameState.balance < Math.floor(gameState.baseBet / 2);
 
